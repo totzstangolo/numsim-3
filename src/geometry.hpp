@@ -115,6 +115,8 @@ private:
 
   multi_real_t _velocity;
   real_t _pressure;
+  real_t _T;
+  multi_real_t _T_wall;
 
   void UpdateCellDirichlet_U(Grid *u, const real_t &value,
                              const Iterator &it) const;

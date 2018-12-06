@@ -23,9 +23,13 @@ Compute::Compute(const Geometry *geom, const Parameter *param){
 	_t = 0.0;
 	multi_real_t h = _geom->Mesh();
 #ifdef USE_OPT_DT
-	_dtlimit = h[0] * h[0] * h[1] * h[1] * _param->Re() /
-			( 2 * ((h[0] * h[0]) + (h[1] * h[1])));
-#else 
+	multi_real_t h2;
+	h2[0] = h[0]*h[0];
+	h2[1] = h[1]*h[1];
+	_dtlimit = h2[0]*h2[1]*_param->Re()/(2*(h2[0]+h2[1]));
+	if (_param->Pr()>0)
+		_dtlimit = std::min<real_t>(_param->Re()*_param->Pr()/(2*(1/h2[0]+1/h2[1])),_dtlimit);
+#else
 	_dtlimit = _param->Dt();
 #endif  // USE_OPT_DT
 	_epslimit = _param->Eps() * _param->Eps() * _geom->Size()[0] * _geom->Size()[1];
@@ -51,9 +55,11 @@ Compute::Compute(const Geometry *geom, const Parameter *param){
 	compute_offset_p[0] = -0.5 * h[0];
 	compute_offset_p[1] = -0.5 * h[1];
 	_p = new Grid(_geom, compute_offset_p);
+	_T = new Grid(_geom, compute_offset_p);
 	_rhs = new Grid(_geom, compute_offset_p);
 	_tmp = new Grid(_geom, compute_offset_p);
 	_p->Initialize(0);
+	_T->Initialize(0);
 
 	//create solver (used script omega, not param omega)
 	_solver = new SOR(_geom, _param->Omega());
@@ -67,6 +73,7 @@ Compute::~Compute(){
 	delete _v;
 	delete _G;
 	delete _p;
+	delete _T;
 	delete _rhs;
 	delete _tmp;
 	delete _solver;
@@ -95,7 +102,9 @@ void Compute::TimeStep(bool printInfo){
 	MomentumEqu(dt);
 	_geom->Update_U(_F);
 	_geom->Update_V(_G);
-	
+
+
+
 	// compute rhs and update bound.
 	RHS(dt);
 	_geom->Update_P(_rhs);

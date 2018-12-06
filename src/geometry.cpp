@@ -80,6 +80,9 @@ Geometry::Geometry() : _comm(NULL) {
   _h[0] = _length[0] / _size[0];
   _h[1] = _length[1] / _size[1];
   _pressure = 0.0;
+  _T = 0.0;
+  _T_wall[0] = 0.5; // hot wall
+  _T_wall[1] = -0.5; // cold wall
   _velocity[0] = 1.0;
   _velocity[1] = 0.0;
 

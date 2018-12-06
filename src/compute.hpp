@@ -69,8 +69,9 @@ private:
   Grid *_u;
   Grid *_v;
 
-  // pressure
+  // pressure and temperature
   Grid *_p;
+  Grid *_T;
 
   // prel. vel
   Grid *_F;
