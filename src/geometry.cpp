@@ -407,11 +407,161 @@ const multi_real_t &Geometry::TotalLength() const { return _length; }
 const multi_real_t &Geometry::Mesh() const { return _h; }
 //------------------------------------------------------------------------------
 void Geometry::Update_U(Grid *u) const {
+  if (_cell) {
+    Iterator it(this);
+    for (it.First(); it.Valid(); it.Next()) {
+      switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+      case typeSlipH:
+      case typeSolid:
+        UpdateCellDirichlet_U(u, 0.0, it);
+        break;
+      case typeIn:
+      case typeInH:
+        UpdateCellDirichlet_U(u, _velocity[0], it);
+        break;
+      case typeSlipV:
+      case typeOut:
+        UpdateCellNeumann(u, it);
+        break;
+      case typeInV:
+        UpdateCellDirichlet_U(
+            u,
+            _velocity[0] *
+                _cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].factor,
+            it);
+        break;
+      default:
+        break;
+      };
+    }
+  } else {
+    BoundaryIterator it(this);
+    if (_comm && _comm->isBottom()) {
+      it.SetBoundary(0);
+      for (it.First(); it.Valid(); it.Next())
+        u->Cell(it) = -u->Cell(it.Top());
+    }
+    if (_comm && _comm->isLeft()) {
+      it.SetBoundary(1);
+      for (it.First(); it.Valid(); it.Next())
+        u->Cell(it) = 0.0;
+    }
+    if (_comm && _comm->isRight()) {
+      it.SetBoundary(3);
+      for (it.First(); it.Valid(); it.Next()) {
+        u->Cell(it) = 0.0;
+        u->Cell(it.Left()) = 0.0;
+      }
+    }
+    if (_comm && _comm->isTop()) {
+      it.SetBoundary(2);
+      for (it.First(); it.Valid(); it.Next())
+        u->Cell(it) = 2.0 * _velocity[0] - u->Cell(it.Down());
+    }
+  }
 }
+
 //------------------------------------------------------------------------------
 void Geometry::Update_V(Grid *v) const {
+  if (_cell) {
+    Iterator it(this);
+    for (it.First(); it.Valid(); it.Next()) {
+      switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+      case typeSlipV:
+      case typeSolid:
+        UpdateCellDirichlet_V(v, 0, it);
+        break;
+      case typeIn:
+      case typeInV:
+        UpdateCellDirichlet_V(v, _velocity[1], it);
+        break;
+      case typeSlipH:
+      case typeOut:
+        UpdateCellNeumann(v, it);
+        break;
+      case typeInH:
+        UpdateCellDirichlet_V(
+            v,
+            _velocity[1] *
+                _cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].factor,
+            it);
+        break;
+      default:
+        break;
+      };
+    }
+  } else {
+    BoundaryIterator it(this);
+    if (_comm && _comm->isBottom()) {
+      it.SetBoundary(0);
+      for (it.First(); it.Valid(); it.Next())
+        v->Cell(it) = 0.0;
+    }
+    if (_comm && _comm->isTop()) {
+      it.SetBoundary(2);
+      for (it.First(); it.Valid(); it.Next()) {
+        v->Cell(it) = 0.0;
+        v->Cell(it.Down()) = 0.0;
+      }
+    }
+    if (_comm && _comm->isLeft()) {
+      it.SetBoundary(1);
+      for (it.First(); it.Valid(); it.Next())
+        v->Cell(it) = -v->Cell(it.Right());
+    }
+    if (_comm && _comm->isRight()) {
+      it.SetBoundary(3);
+      for (it.First(); it.Valid(); it.Next())
+        v->Cell(it) = -v->Cell(it.Left());
+    }
+  }
 }
 //------------------------------------------------------------------------------
 void Geometry::Update_P(Grid *p) const {
+  if (_cell) {
+    Iterator it(this);
+    for (it.First(); it.Valid(); it.Next()) {
+      switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+      case typeIn:
+      case typeInH:
+      case typeInV:
+      case typeSolid:
+        UpdateCellNeumann_P(p, it);
+        break;
+      case typeSlipH:
+      case typeSlipV:
+        p->Cell(it) = _pressure;
+        break;
+      case typeOut:
+        p->Cell(it) = 0;
+        break;
+      default:
+        break;
+      };
+    }
+  } else {
+    BoundaryIterator it(this);
+    if (_comm && _comm->isBottom()) {
+      it.SetBoundary(0);
+      for (it.First(); it.Valid(); it.Next())
+        p->Cell(it) = p->Cell(it.Top());
+    }
+    if (_comm && _comm->isTop()) {
+      it.SetBoundary(2);
+      for (it.First(); it.Valid(); it.Next())
+        p->Cell(it) = p->Cell(it.Down());
+    }
+    if (_comm && _comm->isLeft()) {
+      it.SetBoundary(1);
+      for (it.First(); it.Valid(); it.Next())
+        p->Cell(it) = p->Cell(it.Right());
+    }
+    if (_comm && _comm->isRight()) {
+      it.SetBoundary(3);
+      for (it.First(); it.Valid(); it.Next())
+        p->Cell(it) = p->Cell(it.Left());
+    }
+  }
 }
+
 //------------------------------------------------------------------------------
