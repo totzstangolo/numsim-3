@@ -21,6 +21,39 @@
 #include "communicator.hpp"
 #include <stdio.h>
 #include <string.h>
+
+
+/*
+ *
+ * typeInH:
+ * HHHHHHHHHHHHHHHHHHHHHHHHHHHH
+ *  \     |     |     |      /
+ *   \    v     v     v     /
+ *     ---------------------
+ *
+ * typeInV:
+ *  V \
+ *  V >\
+ *  V > |
+ *  V > |
+ *  V >/
+ *  V /
+ *
+ * typeSlipH:
+ * ----------------------
+ *  ->  ->  ->  ->  ->
+ *
+ * typeSlipV:
+ * |
+ * | ^
+ * | |
+ * |
+ * | ^
+ * | |
+ * |
+ *
+ * */
+
 //------------------------------------------------------------------------------
 void Geometry::UpdateCellDirichlet_U(Grid *u, const real_t &value,
                                      const Iterator &it) const {
@@ -32,12 +65,14 @@ void Geometry::UpdateCellDirichlet_U(Grid *u, const real_t &value,
   case cellNW:
     //TODO
   case cellN:
-    //TODO
+    u->Cell(it.Top()) = value;
+    u->Cell(it) = value;
     break;
   case cellSW:
     //TODO
   case cellS:
-    //TODO
+    u->Cell(it.Down()) = value;
+    u->Cell(it) = value;
     break;
   default:
     u->Cell(it) = value;
@@ -47,10 +82,31 @@ void Geometry::UpdateCellDirichlet_U(Grid *u, const real_t &value,
 //------------------------------------------------------------------------------
 void Geometry::UpdateCellDirichlet_V(Grid *v, const real_t &value,
                                      const Iterator &it) const {
-  // switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].fluid) {
-  // case cellS:
-  //   //TODO
-  // };
+ switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].fluid) {
+ case cellW:
+   v->Cell(it.Left()) = value;
+   v->Cell(it) = value;
+   break;
+ case cellNW:
+   // v->Cell(it.Left()) = value;
+   // v->Cell(it) = value;
+   // break;
+ case cellN:
+   v->Cell(it.Top()) = value;
+   v->Cell(it) = value;
+   break;
+ case cellSW:
+   // v->Cell(it.Left()) = value;
+   // v->Cell(it) = value;
+   // break;
+ case cellS:
+   v->Cell(it.Down()) = value;
+   v->Cell(it) = value;
+   break;
+ default:
+   v->Cell(it) = value;
+   break;
+ };
 }
 //------------------------------------------------------------------------------
 void Geometry::UpdateCellNeumann(Grid *grid, const Iterator &it) const {
@@ -66,10 +122,7 @@ void Geometry::UpdateCellNeumann(Grid *grid, const Iterator &it) const {
 }
 //------------------------------------------------------------------------------
 void Geometry::UpdateCellNeumann_P(Grid *grid, const Iterator &it) const {
-  // switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].fluid) {
-  // case cellW:
-  // //TODO
-  // };
+  UpdateCellNeumann(grid, it);
 }
 //------------------------------------------------------------------------------
 Geometry::Geometry() : _comm(NULL) {
@@ -80,9 +133,6 @@ Geometry::Geometry() : _comm(NULL) {
   _h[0] = _length[0] / _size[0];
   _h[1] = _length[1] / _size[1];
   _pressure = 0.0;
-  _T = 0.0;
-  _T_wall[0] = 0.5; // hot wall
-  _T_wall[1] = -0.5; // cold wall
   _velocity[0] = 1.0;
   _velocity[1] = 0.0;
 
@@ -134,7 +184,7 @@ Geometry::~Geometry() {
 void Geometry::Load(const char *file) {
   FILE *handle = fopen(file, "r");
   double inval[2];
-  char name[20];
+  char name[200000];
   while (!feof(handle)) {
     if (!fscanf(handle, "%s =", name))
       continue;
@@ -173,13 +223,13 @@ void Geometry::Load(const char *file) {
         _cell = new Cell_t[_size[0] * _size[1]];
         bool parabolic = false;
         // Read stuff from file
-        for (uint32_t y = _size[1]; y-- > 0;) {
+        for (int y = _size[1]; y-- > 0;) {
           if (feof(handle)) {
             delete[] _cell;
             _cell = NULL;
             break;
           }
-          for (uint32_t x = 0; x < _size[0]; ++x) {
+          for (int x = 0; x < _size[0]; ++x) {
             _cell[x + y * _size[0]].fluid = cellNone;
             _cell[x + y * _size[0]].factor = 1.0;
             switch (getc(handle)) {
@@ -193,10 +243,10 @@ void Geometry::Load(const char *file) {
               _cell[x + y * _size[0]].type = typeOut;
               break;
             case '|':
-              _cell[x + y * _size[0]].type = typeSlipH;
+              _cell[x + y * _size[0]].type = typeSlipV;
               break;
             case '-':
-              _cell[x + y * _size[0]].type = typeSlipV;
+              _cell[x + y * _size[0]].type = typeSlipH;
               break;
             case 'H':
               _cell[x + y * _size[0]].type = typeInH;
@@ -220,9 +270,9 @@ void Geometry::Load(const char *file) {
         if (!_cell)
           break;
         // Process it
-        for (uint32_t y = 0; y < _size[1]; ++y) {
-          for (uint32_t x = 0; x < _size[0]; ++x) {
-            uint32_t check = 0;
+        for (int y = 0; y < _size[1]; ++y) {
+          for (int x = 0; x < _size[0]; ++x) {
+            int check = 0;
             if (_cell[x + y * _size[0]].type == typeFluid)
               continue;
             if (x < _size[0] - 1 &&
@@ -279,8 +329,8 @@ void Geometry::Load(const char *file) {
         }
         // Parabolic stuff
         if (parabolic) {
-          for (uint32_t y = 0; y < _size[1]; ++y) {
-            for (uint32_t x = 0; x < _size[0]; ++x) {
+          for (int y = 0; y < _size[1]; ++y) {        // uint32_t durch int ersetzt
+            for (int x = 0; x < _size[0]; ++x) {
               int32_t dist1 = 0;
               int32_t dist2 = 0;
               switch (_cell[x + y * _size[0]].type) {
@@ -357,159 +407,11 @@ const multi_real_t &Geometry::TotalLength() const { return _length; }
 const multi_real_t &Geometry::Mesh() const { return _h; }
 //------------------------------------------------------------------------------
 void Geometry::Update_U(Grid *u) const {
-  if (_cell) {
-    Iterator it(this);
-    for (it.First(); it.Valid(); it.Next()) {
-      switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
-      case typeSlipH:
-      case typeSolid:
-        UpdateCellDirichlet_U(u, 0.0, it);
-        break;
-      case typeIn:
-      case typeInH:
-        UpdateCellDirichlet_U(u, _velocity[0], it);
-        break;
-      case typeSlipV:
-      case typeOut:
-        UpdateCellNeumann(u, it);
-        break;
-      case typeInV:
-        UpdateCellDirichlet_U(
-            u,
-            _velocity[0] *
-                _cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].factor,
-            it);
-        break;
-      default:
-        break;
-      };
-    }
-  } else {
-    BoundaryIterator it(this);
-    if (_comm && _comm->isBottom()) {
-      it.SetBoundary(0);
-      for (it.First(); it.Valid(); it.Next())
-        u->Cell(it) = -u->Cell(it.Top());
-    }
-    if (_comm && _comm->isLeft()) {
-      it.SetBoundary(1);
-      for (it.First(); it.Valid(); it.Next())
-        u->Cell(it) = 0.0;
-    }
-    if (_comm && _comm->isRight()) {
-      it.SetBoundary(3);
-      for (it.First(); it.Valid(); it.Next()) {
-        u->Cell(it) = 0.0;
-        u->Cell(it.Left()) = 0.0;
-      }
-    }
-    if (_comm && _comm->isTop()) {
-      it.SetBoundary(2);
-      for (it.First(); it.Valid(); it.Next())
-        u->Cell(it) = 2.0 * _velocity[0] - u->Cell(it.Down());
-    }
-  }
 }
 //------------------------------------------------------------------------------
 void Geometry::Update_V(Grid *v) const {
-  if (_cell) {
-    Iterator it(this);
-    for (it.First(); it.Valid(); it.Next()) {
-      switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
-      case typeSlipV:
-      case typeSolid:
-        UpdateCellDirichlet_V(v, 0, it);
-        break;
-      case typeIn:
-      case typeInV:
-        UpdateCellDirichlet_V(v, _velocity[1], it);
-        break;
-      case typeSlipH:
-      case typeOut:
-        UpdateCellNeumann(v, it);
-        break;
-      case typeInH:
-        UpdateCellDirichlet_V(
-            v,
-            _velocity[1] *
-                _cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].factor,
-            it);
-        break;
-      default:
-        break;
-      };
-    }
-  } else {
-    BoundaryIterator it(this);
-    if (_comm && _comm->isBottom()) {
-      it.SetBoundary(0);
-      for (it.First(); it.Valid(); it.Next())
-        v->Cell(it) = 0.0;
-    }
-    if (_comm && _comm->isTop()) {
-      it.SetBoundary(2);
-      for (it.First(); it.Valid(); it.Next()) {
-        v->Cell(it) = 0.0;
-        v->Cell(it.Down()) = 0.0;
-      }
-    }
-    if (_comm && _comm->isLeft()) {
-      it.SetBoundary(1);
-      for (it.First(); it.Valid(); it.Next())
-        v->Cell(it) = -v->Cell(it.Right());
-    }
-    if (_comm && _comm->isRight()) {
-      it.SetBoundary(3);
-      for (it.First(); it.Valid(); it.Next())
-        v->Cell(it) = -v->Cell(it.Left());
-    }
-  }
 }
 //------------------------------------------------------------------------------
 void Geometry::Update_P(Grid *p) const {
-  if (_cell) {
-    Iterator it(this);
-    for (it.First(); it.Valid(); it.Next()) {
-      switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
-      case typeIn:
-      case typeInH:
-      case typeInV:
-      case typeSolid:
-        UpdateCellNeumann_P(p, it);
-        break;
-      case typeSlipH:
-      case typeSlipV:
-        p->Cell(it) = _pressure;
-        break;
-      case typeOut:
-        p->Cell(it) = 0;
-        break;
-      default:
-        break;
-      };
-    }
-  } else {
-    BoundaryIterator it(this);
-    if (_comm && _comm->isBottom()) {
-      it.SetBoundary(0);
-      for (it.First(); it.Valid(); it.Next())
-        p->Cell(it) = p->Cell(it.Top());
-    }
-    if (_comm && _comm->isTop()) {
-      it.SetBoundary(2);
-      for (it.First(); it.Valid(); it.Next())
-        p->Cell(it) = p->Cell(it.Down());
-    }
-    if (_comm && _comm->isLeft()) {
-      it.SetBoundary(1);
-      for (it.First(); it.Valid(); it.Next())
-        p->Cell(it) = p->Cell(it.Right());
-    }
-    if (_comm && _comm->isRight()) {
-      it.SetBoundary(3);
-      for (it.First(); it.Valid(); it.Next())
-        p->Cell(it) = p->Cell(it.Left());
-    }
-  }
 }
 //------------------------------------------------------------------------------

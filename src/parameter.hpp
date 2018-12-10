@@ -17,12 +17,19 @@ public:
     const real_t&		    Pr		() const;
 	const real_t&		    Omega	() const;
 	const real_t&		    Alpha	() const;
+    const real_t&		    Beta	() const;
 	const real_t&		    Dt		() const;
 	const real_t&		    Tend	() const;
 	const index_t&		    IterMax	() const;
 	const real_t&		    Eps		() const;
 	const real_t&		    Tau		() const;
-    const multi_real_t&		grav	() const;
+    const real_t&		    Gx   	() const;
+    const real_t&		    Gy   	() const;
+    const real_t&		    T_h   	() const;
+    const real_t&		    T_c   	() const;
+    const real_t&		    Dt_value() const;
+    const real_t&		    Imax   	() const;
+    const real_t&		    Jmax   	() const;
 private:
     real_t	_re;
     real_t  _pr;
@@ -34,7 +41,14 @@ private:
     real_t	_eps;
     real_t	_tau;
     index_t	_itermax;
-    multi_real_t _grav;
+    real_t _dt_value;
+    real_t _gy;
+    real_t _gx;
+    real_t _T_h;
+    real_t _T_c;
+    real_t _imax;
+    real_t _jmax;
+
 };
 //------------------------------------------------------------------------------
 #endif // __PARAMETER_HPP

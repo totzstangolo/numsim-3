@@ -149,11 +149,13 @@ argvparser.hpp
 /home/bartosz/Documents/universitaet/master/numSim/tutorials/3/numsim-3/src/parameter.cpp
 parameter.hpp
 /home/bartosz/Documents/universitaet/master/numSim/tutorials/3/numsim-3/src/parameter.hpp
-cstdio
--
-cstring
+iostream
 -
 cstdlib
+-
+stdio.h
+-
+string.h
 -
 
 /home/bartosz/Documents/universitaet/master/numSim/tutorials/3/numsim-3/src/parameter.hpp

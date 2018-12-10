@@ -40,9 +40,6 @@ int main(int argc, char **argv) {
   Communicator comm(&argc, &argv);
   Parameter param;
   Geometry geom(&comm);
-  // Create the fluid solver
-  Compute comp(&geom, &param);
-
   ARGVParser parser;
   parser.bind("-geom", [&geom](int ac, char **av) -> int {
     if (ac != 1) return 0;
@@ -55,6 +52,10 @@ int main(int argc, char **argv) {
     return 1;
   });
   parser.exec(argc, argv);
+  // Create the fluid solver
+  Compute comp(&geom, &param);
+
+
 
 #ifdef USE_VTK
   if (comm.getRank() == 0) {
