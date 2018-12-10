@@ -1,4 +1,4 @@
-size = 160 32
+size = 64 32
 length = 5.000000 1.000000
 velocity = 1.000000 0.000000
 pressure = 0.000000
