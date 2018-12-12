@@ -452,8 +452,6 @@ void Geometry::Update_U(Grid *u) const {
         UpdateCellDirichlet_U(u, 0.0, it);
         break;
       case typeIn:
-          UpdateCellDirichlet_U(u, _velocity[0], it);
-          break;
       case typeInH:
         UpdateCellDirichlet_U(u, _velocity[0], it);
         break;
