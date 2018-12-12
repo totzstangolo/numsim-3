@@ -74,6 +74,15 @@ void Geometry::UpdateCellDirichlet_U(Grid *u, const real_t &value,
     u->Cell(it.Down()) = value;
     u->Cell(it) = - value;
     break;
+    /////////////////
+    case cellE:
+      u->Cell(it.Right()) = value;
+      u->Cell(it) = value;
+    case cellSE:
+        u->Cell(it.Right()) = value;
+    case cellNE:
+        u->Cell(it.Right()) = value;
+    /////////////////
   default:
     u->Cell(it) = value;
     break;
@@ -101,6 +110,15 @@ void Geometry::UpdateCellDirichlet_V(Grid *v, const real_t &value,
         v->Cell(it.Right()) = value;
         v->Cell(it) = - value;
         break;
+    /////////////////
+    case cellN:
+        v->Cell(it.Top()) = value;
+        v->Cell(it) = value;
+    case cellNW:
+        v->Cell(it.Top()) = value;
+    case cellNE:
+        v->Cell(it.Top()) = value;
+    /////////////////
     default:
       v->Cell(it) = value;
       break;
@@ -132,6 +150,9 @@ void Geometry::UpdateCellNeumann(Grid *grid, const Iterator &it) const {
         break;
     case cellSW:
         grid->Cell(it) = 0.5 * (grid->Cell(it.Left()) + grid->Cell(it.Down()));
+        break;
+    default:
+        grid->Cell(it) = grid->Cell(it.Left());
         break;
   };
 }
@@ -431,11 +452,14 @@ void Geometry::Update_U(Grid *u) const {
         UpdateCellDirichlet_U(u, 0.0, it);
         break;
       case typeIn:
+          UpdateCellDirichlet_U(u, _velocity[0], it);
+          break;
       case typeInH:
         UpdateCellDirichlet_U(u, _velocity[0], it);
         break;
       case typeSlipV:
       case typeOut:
+        // std::cout << _size[0] << std::endl;
         UpdateCellNeumann(u, it);
         break;
       case typeInV:
