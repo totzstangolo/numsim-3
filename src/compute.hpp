@@ -92,6 +92,10 @@ private:
   void NewVelocities(const real_t &dt);
   /// Compute the temporary velocites F,G
   void MomentumEqu(const real_t &dt);
+  /// Compute the modified temporary velocites ~F,~G
+  void ModMomentumEqu(const real_t &dt);
+  /// Compute the temporary velocites F,G
+  void TempEqu(const real_t &dt);
   /// Compute the RHS of the poisson equation
   void RHS(const real_t &dt);
 };

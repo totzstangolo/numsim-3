@@ -20,6 +20,7 @@ while (!feof(handle)) {
 	if (strcmp(name,"re") == 0) _re = inval;
 	else if (strcmp(name,"omg") == 0) _omega = inval;
 	else if (strcmp(name,"alpha") == 0) _alpha = inval;
+    else if (strcmp(name,"beta") == 0) _beta = inval;
 	else if (strcmp(name,"dt") == 0) _dt = inval;
 	else if (strcmp(name,"tend") == 0) _tend = inval;
 	else if (strcmp(name,"iter") == 0) _itermax = inval;
