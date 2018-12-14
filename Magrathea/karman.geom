@@ -8,16 +8,16 @@ V                                                                               
 V                                                                                                  O
 V                                                                                                  O
 V                                                                                                  O
-V    ##                                                                                            O
-V    ###                                                                                           O
-V     ###                                                                                          O
-V      ###                                                                                         O
-V       ###                                                                                        O
+V                                                                                                  O
+V                                                                                                  O
+V                                                                                                  O
+V         ##                                                                                       O
 V        ###                                                                                       O
-V         ###                                                                                      O
-V          ###                                                                                     O
-V           ###                                                                                    O
-V            ##                                                                                    O
+V       ###                                                                                        O
+V       ##                                                                                         O
+V                                                                                                  O
+V                                                                                                  O
+V                                                                                                  O
 V                                                                                                  O
 V                                                                                                  O
 V                                                                                                  O

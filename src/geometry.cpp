@@ -64,24 +64,25 @@ void Geometry::UpdateCellDirichlet_U(Grid *u, const real_t &value,
     break;
   case cellNW:
     u->Cell(it.Left()) = value;
+    u->Cell(it) = - u->Cell(it.Top());
   case cellN:
-    u->Cell(it.Top()) = value;
-    u->Cell(it) = - value;
+    u->Cell(it) = - u->Cell(it.Top());
     break;
   case cellSW:
     u->Cell(it.Left()) = value;
+    u->Cell(it) = - u->Cell(it.Down());
   case cellS:
-    u->Cell(it.Down()) = value;
-    u->Cell(it) = - value;
+    u->Cell(it) = - u->Cell(it.Down());
+    // u->Cell(it) = - value;
     break;
     /////////////////
-    case cellE:
-      u->Cell(it.Right()) = value;
-      u->Cell(it) = value;
-    case cellSE:
-        u->Cell(it.Right()) = value;
-    case cellNE:
-        u->Cell(it.Right()) = value;
+    // case cellE:
+    //   u->Cell(it.Right()) = value;
+    //   u->Cell(it) = value;
+    // case cellSE:
+    //     u->Cell(it.Right()) = value;
+    // case cellNE:
+    //     u->Cell(it.Right()) = value;
     /////////////////
   default:
     u->Cell(it) = value;
@@ -98,26 +99,28 @@ void Geometry::UpdateCellDirichlet_V(Grid *v, const real_t &value,
         break;
     case cellSW:
         v->Cell(it.Down()) = value;
+        v->Cell(it) = - v->Cell(it.Left());
         break;
     case cellW:
-        v->Cell(it.Left()) = value;
-        v->Cell(it) = - value;
+        v->Cell(it.Down()) = value;
+        v->Cell(it) = - v->Cell(it.Left());
         break;
     case cellSE:
         v->Cell(it.Down()) = value;
+        v->Cell(it) = - v->Cell(it.Right());
         break;
     case cellE:
-        v->Cell(it.Right()) = value;
-        v->Cell(it) = - value;
+        v->Cell(it.Down()) = value;
+        v->Cell(it) = - v->Cell(it.Right());
         break;
     /////////////////
-    case cellN:
-        v->Cell(it.Top()) = value;
-        v->Cell(it) = value;
-    case cellNW:
-        v->Cell(it.Top()) = value;
-    case cellNE:
-        v->Cell(it.Top()) = value;
+    // case cellN:
+    //     v->Cell(it.Top()) = value;
+    //     v->Cell(it) = value;
+    // case cellNW:
+    //     v->Cell(it.Top()) = value;
+    // case cellNE:
+    //     v->Cell(it.Top()) = value;
     /////////////////
     default:
       v->Cell(it) = value;
@@ -280,6 +283,15 @@ void Geometry::Load(const char *file) {
               break;
             case '|':
               _cell[x + y * _size[0]].type = typeSlipV;
+              break;
+            case 'T':
+              _cell[x + y * _size[0]].type = typeHot;
+              break;
+            case 'C':
+              _cell[x + y * _size[0]].type = typeCold;
+              break;
+            case 'W':
+              _cell[x + y * _size[0]].type = typeInsul;
               break;
             case '-':
               _cell[x + y * _size[0]].type = typeSlipH;
@@ -456,6 +468,12 @@ void Geometry::Update_U(Grid *u) const {
         UpdateCellDirichlet_U(u, _velocity[0], it);
         break;
       case typeSlipV:
+      case typeHot:
+        //UpdateCellDirichlet_T()
+      case typeCold:
+        //UpdateCellDirichlet_T()
+      case typeInsul:
+        //UpdateCellNeumann_P()
       case typeOut:
         // std::cout << _size[0] << std::endl;
         UpdateCellNeumann(u, it);

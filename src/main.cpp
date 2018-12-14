@@ -75,14 +75,22 @@ int main(int argc, char **argv) {
   visu.Init(800/ comm.ThreadDim()[0], 800*ratio/ comm.ThreadDim()[1], comm.getRank() + 1);
 #endif // USE_DEBUG_VISU
 
+// #ifdef USE_VTK
+//   // Create a VTK generator;
+//   // use offset as the domain shift
+//   multi_real_t offset;
+//   offset[0] = comm.ThreadIdx()[0] * (geom.Mesh()[0] * (double)(geom.Size()[0] - 2));
+//   offset[1] = comm.ThreadIdx()[1] * (geom.Mesh()[1] * (double)(geom.Size()[1] - 2));
+//   VTK vtk(geom.Mesh(), geom.Size(), geom.TotalSize(), offset, comm.getRank(),
+//           comm.getSize(), comm.ThreadDim());
+// #endif
+
+multi_real_t offset;
+offset[0] = comm.ThreadIdx()[0] * (geom.Mesh()[0] * (double)(geom.Size()[0] - 2));
+offset[1] = comm.ThreadIdx()[1] * (geom.Mesh()[1] * (double)(geom.Size()[1] - 2));
 #ifdef USE_VTK
-  // Create a VTK generator;
-  // use offset as the domain shift
-  multi_real_t offset;
-  offset[0] = comm.ThreadIdx()[0] * (geom.Mesh()[0] * (double)(geom.Size()[0] - 2));
-  offset[1] = comm.ThreadIdx()[1] * (geom.Mesh()[1] * (double)(geom.Size()[1] - 2));
-  VTK vtk(geom.Mesh(), geom.Size(), geom.TotalSize(), offset, comm.getRank(),
-          comm.getSize(), comm.ThreadDim());
+VTK vtk(geom.Mesh(), geom.Length(), geom.TotalLength(), offset, comm.getRank(),
+      comm.getSize(), comm.ThreadDim());
 #endif
 
 #ifdef USE_DEBUG_VISU

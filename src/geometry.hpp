@@ -26,6 +26,9 @@
 typedef enum {
   typeFluid, // Standard fluid cell
   typeSolid, // Simple wall, no slip
+  typeHot,
+  typeCold,
+  typeInsul,
   typeIn,    // Simple inflow (forced Velocity)
   typeOut,   // Outflow
   typeSlipH, // Horizontal slip boundary

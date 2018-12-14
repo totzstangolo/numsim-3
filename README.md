@@ -4,20 +4,19 @@
 ### in ./Magrathea:
 
        make (produces "magrathea" binary)
-### in ./build (create if it's not existing):
-       make clean && cmake --DEBUG_VISU=ON .. && make (produces "NumSim" binary)
+### in numsim-3:
+       scons
+
+Produces build directory
 ## Executing:
 ### a) Karman:
-### in ./Magrathea (alternatively just use karman.geom):
-       ./magrathea -size 100x20 -length 10x2 -speed 1x0 -pressure 0 -pre 4 -o karman
-
-       open "karman.geom", replace all "-" with "I"
+Just use karman.geom and karman.param
 
 ### b) Step:
-### in ./Magrathea (alternatively just use step.geom):
+#### in ./Magrathea (alternatively just use step.geom):
       ./magrathea -size 100x20 -length 10x2 -speed 1x0 -pressure 0 -pre 3 -o step
 
-      open "step.geom", replace all "-" with "I"
+      open "step.geom", replace all "-" with "V"
 
 ### in ./build:
        ./NumSim -geom ../Magrathea/karman.geom -param ../karman.param

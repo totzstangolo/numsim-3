@@ -32,7 +32,10 @@ set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GOOD_FLAGS}")
 
 # debug visu?
 option (DEBUG_VISU
-  "Enable debugging visualization" ON)
+  "Enable debugging visualization" OFF)
+option (VTK_VISU
+  "Enable VTK visualization" ON)
+
 
 # find sdl 2
 INCLUDE(FindPkgConfig)
@@ -82,6 +85,10 @@ if (DEBUG_VISU)
 
   add_definitions(-DUSE_DEBUG_VISU)
 endif (DEBUG_VISU)
+
+if (VTK_VISU)
+  add_definitions(-DUSE_VTK)
+endif (VTK_VISU)
 
 add_executable (NumSim ${SOURCES})
 target_link_libraries (NumSim ${SDL2_LIBRARIES} ${MPI_LIBRARIES})

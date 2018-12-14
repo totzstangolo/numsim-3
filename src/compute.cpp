@@ -26,8 +26,7 @@ Compute::Compute(const Geometry *geom, const Parameter *param){
 	multi_real_t h2;
 	h2[0] = h[0]*h[0];
 	h2[1] = h[1]*h[1];
-	// _dtlimit = h2[0]*h2[1]*_param->Re()/(2*(h2[0]+h2[1]));
-	_dtlimit = h[0]*h[0]*h[1]*h[1]*_param->Re()/(2*(h[0]*h[0]+h[1]*h[1]));
+	_dtlimit = h2[0]*h2[1]*_param->Re()/(2*(h2[0]+h2[1]));
 
 	if (_param->Pr()>0)
 		_dtlimit = std::min<real_t>(_param->Re()*_param->Pr()/(2*(1/h2[0]+1/h2[1])),_dtlimit);
@@ -143,6 +142,7 @@ void Compute::TimeStep(bool printInfo){
 	_geom->Update_V(_v);
 
 	_t += dt;
+
 	if(printInfo)
 		// printf("time: %f \n itercount: %d \n max_dt: %f \n", _t, _iter_count, _max_dt);
 		printf("time: %f\n", _t);
