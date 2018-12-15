@@ -18,6 +18,7 @@
 #include "typedef.hpp"
 #include "communicator.hpp"
 #include "iterator.hpp"
+#include "parameter.hpp"
 //------------------------------------------------------------------------------
 #ifndef __GEOMETRY_HPP
 #define __GEOMETRY_HPP
@@ -36,6 +37,14 @@ typedef enum {
   typeInH,   // Horizontal inflow (parabolic)
   typeInV    // Vertical inflow (parabolic)
 } CellType_t;
+
+/*typedef enum {
+  typeHot,
+  typeCold,
+  typeInsul,
+ } CellTemp_t;*/
+
+
 /// Typedef for cell boundary type (which boundary cells are fluid)
 //      |  N   |
 //   ___|______|___
@@ -61,6 +70,7 @@ typedef enum {
 typedef struct {
   CellType_t type;      // Cell type
   CellBoundary_t fluid; // Surrounding fluid cells
+//  CellTemp_t temp; 		// Temperature Boundary Type
   real_t factor;        // Scale factor for inital values
 } Cell_t;
 //------------------------------------------------------------------------------
@@ -97,12 +107,20 @@ public:
   /// Returns the meshwidth
   const multi_real_t &Mesh() const;
 
+
+  /// Returns the celltype of cell
+  const CellType_t &get_cellType(index_t index) const {return _cell[index].type;};
+
+
   /// Updates the velocity field u
   void Update_U(Grid *u) const;
   /// Updates the velocity field v
   void Update_V(Grid *v) const;
   /// Updates the pressure field p
   void Update_P(Grid *p) const;
+  /// Updates the pressure field t
+  void Update_T(Grid *t, real_t hot, real_t cold) const;
+
 
 private:
   const Communicator *_comm;
@@ -124,6 +142,8 @@ private:
   void UpdateCellDirichlet_U(Grid *u, const real_t &value,
                              const Iterator &it) const;
   void UpdateCellDirichlet_V(Grid *v, const real_t &value,
+                             const Iterator &it) const;
+  void UpdateCellDirichlet_T(Grid *t, const real_t &value,
                              const Iterator &it) const;
   void UpdateCellNeumann(Grid *grid, const Iterator &it) const;
   void UpdateCellNeumann_P(Grid *grid, const Iterator &it) const;

@@ -42,6 +42,8 @@ public:
   /// Returns the pointer to P
   const Grid *GetP() const;
   /// Returns the pointer to RHS
+  const Grid *GetT() const;
+  /// Returns the pointer to T
   const Grid *GetRHS() const;
 
   /// Computes and returns the absolute velocity

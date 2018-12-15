@@ -118,6 +118,8 @@ VTK vtk(geom.Mesh(), geom.Length(), geom.TotalLength(), offset, comm.getRank(),
     case 3:
       visugrid = comp.GetP();
       break;
+    case 4:
+      visugrid = comp.GetT();
     default:
       break;
     };
@@ -131,6 +133,7 @@ VTK vtk(geom.Mesh(), geom.Length(), geom.TotalLength(), offset, comm.getRank(),
     vtk.SwitchToPointData();
     vtk.AddPointField("Velocity", comp.GetU(), comp.GetV());
     vtk.AddPointScalar("Pressure", comp.GetP());
+    vtk.AddPointScalar("Temperature", comp.GetT());
     vtk.Finish();
 #endif
 

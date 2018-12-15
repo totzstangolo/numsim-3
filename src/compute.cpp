@@ -96,11 +96,11 @@ void Compute::TimeStep(bool printInfo){
 
 	_max_dt = std::min<real_t>(_max_dt, dt);
 
-	BoundaryIterator it(_geom);
+	/*BoundaryIterator it(_geom);
 	it.SetBoundary(0);
 	for (it.First();it.Valid();it.Next()){
 		_T->Cell(it) = 1.0;
-	}
+	}*/
 	// Iterator it2(_geom);
 	// for (it2.First();it2.Valid();it2.Next()){
 	// 	std::cout << "Temperature in cell " << it2.Value() << ": "
@@ -108,15 +108,17 @@ void Compute::TimeStep(bool printInfo){
 	// }
 	// exit(0);
 	// compute FG and update bound.
-	MomentumEqu(dt);
-	_geom->Update_U(_F);
-	_geom->Update_V(_G);
 
+
+	// compute temperature and update bound
 	TempEqu(dt);
+	_geom->Update_T(_T, _param->T_h(), _param->T_c());
+
+	// compute FG and update bound.
+	MomentumEqu(dt);
 	ModMomentumEqu(dt);
 	_geom->Update_U(_F);
 	_geom->Update_V(_G);
-	_geom->Update_P(_T);
 
 	// compute rhs and update bound.
 	RHS(dt);
@@ -166,6 +168,12 @@ const Grid* Compute::GetV() const{
 const Grid* Compute::GetP() const{
     return _p;
 }
+
+/// Returns the pointer to T
+const Grid* Compute::GetT() const{
+  return _T;
+}
+
   /// Returns the pointer to RHS
 const Grid* Compute::GetRHS() const{
     return _rhs;
@@ -247,15 +255,15 @@ void Compute::TempEqu(const real_t &dt){
 	real_t txx = 0.0;
 	real_t tyy = 0.0;
 	real_t utx = 0.0;
-	real_t vtx = 0.0;
+	real_t vty = 0.0;
 	real_t pref = 1/(_param->Re()*_param->Pr());
 	for(intIterator.First(); intIterator.Valid(); intIterator.Next()){
 		txx = _T->dxx(intIterator);
 		tyy = _T->dyy(intIterator);
-		utx = _T->DC_udv_x(intIterator,_param->Alpha(),_u);
-		vtx = _T->DC_vdu_y(intIterator,_param->Alpha(),_u);
+		utx = _T->DC_duT_x(intIterator,_param->Alpha(),_u);
+		vty = _T->DC_dvT_y(intIterator,_param->Alpha(),_v);
 		_T->Cell(intIterator) = _T->Cell(intIterator) +
-				(pref*(txx+tyy)-utx-vtx)*dt;
+				(pref*(txx+tyy)-utx-vty)*dt;
 		// std::cout << "Temperature in cell " << intIterator.Value() << ": "
 		// 	<< _T->Cell(intIterator) << std::endl;
 	}

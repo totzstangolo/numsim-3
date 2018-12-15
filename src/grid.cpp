@@ -3,7 +3,12 @@
 #include "iterator.hpp"
 #include <iostream>
 #include <cmath>
+#include <cstdlib>
+#include <iostream>
+#include <ctime>
+#include <algorithm>
 using namespace std;
+
 /// Constructs a grid based on a geometry
 Grid::Grid(const Geometry *geom){
 	_geom = geom;
@@ -160,6 +165,20 @@ real_t Grid::DC_vdv_y(const Iterator &it, const real_t &alpha) const{
 	real_t term_4 = Cell(it.Down()) - cell_it;
 	return (0.25*(((term_1*term_1)-(term_2*term_2))
 		+ alpha*(abs(term_1)*term_3-abs(term_2)*term_4))/_geom->Mesh()[1]);
+}
+
+/// Computes duT/dx with the donor cell method
+real_t Grid::DC_duT_x(const Iterator &it, const real_t &alpha, const Grid *u) const{
+	real_t term1 = u->Cell(it) * (Cell(it) + Cell(it.Right()))/2 - u->Cell(it.Left()) * (Cell(it) + Cell(it.Left()))/2;
+	real_t term2 = std::abs(u->Cell(it)) * (Cell(it) - Cell(it.Right()))/2 - std::abs(u->Cell(it.Left())) * (-Cell(it) + Cell(it.Left()))/2;
+	return ((term1 + alpha * term2)/_geom->Mesh()[0]);
+}
+
+/// Computes dvT/dy with the donor cell method
+real_t Grid::DC_dvT_y(const Iterator &it, const real_t &alpha, const Grid *v) const{
+	real_t term1 = v->Cell(it) * (Cell(it) + Cell(it.Top()))/2 - v->Cell(it.Down()) * (Cell(it) + Cell(it.Down()))/2;
+	real_t term2 = abs(v->Cell(it)) * (Cell(it) - Cell(it.Top()))/2 - abs(v->Cell(it.Down())) * (-Cell(it) + Cell(it.Down()))/2;
+	return ((term1 + alpha * term2)/_geom->Mesh()[1]);
 }
 
 /// Returns the maximal value of the grid

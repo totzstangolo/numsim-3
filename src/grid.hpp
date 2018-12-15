@@ -66,6 +66,11 @@ public:
   real_t DC_udv_x(const Iterator &it, const real_t &alpha, const Grid *u) const;
   /// Computes v*dv/dy with the donor cell method
   real_t DC_vdv_y(const Iterator &it, const real_t &alpha) const;
+  /// Computes duT/dx with the donor cell method
+  real_t DC_duT_x(const Iterator &it, const real_t &alpha, const Grid *u) const;
+  /// Computes dvT/dy with the donor cell method
+  real_t DC_dvT_y(const Iterator &it, const real_t &alpha, const Grid *v) const;
+
 
   /// Returns the maximal value of the grid
   real_t Max() const;

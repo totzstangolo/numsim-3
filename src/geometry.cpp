@@ -19,6 +19,7 @@
 #include "iterator.hpp"
 #include "grid.hpp"
 #include "communicator.hpp"
+#include "parameter.hpp"
 #include <stdio.h>
 #include <string.h>
 
@@ -64,26 +65,14 @@ void Geometry::UpdateCellDirichlet_U(Grid *u, const real_t &value,
     break;
   case cellNW:
     u->Cell(it.Left()) = value;
-    u->Cell(it) = - u->Cell(it.Top());
   case cellN:
-    u->Cell(it) = - u->Cell(it.Top());
+    u->Cell(it) = 2.0 * value - u->Cell(it.Top());
     break;
   case cellSW:
     u->Cell(it.Left()) = value;
-    u->Cell(it) = - u->Cell(it.Down());
   case cellS:
-    u->Cell(it) = - u->Cell(it.Down());
-    // u->Cell(it) = - value;
+    u->Cell(it) = 2.0 * value - u->Cell(it.Down());
     break;
-    /////////////////
-    // case cellE:
-    //   u->Cell(it.Right()) = value;
-    //   u->Cell(it) = value;
-    // case cellSE:
-    //     u->Cell(it.Right()) = value;
-    // case cellNE:
-    //     u->Cell(it.Right()) = value;
-    /////////////////
   default:
     u->Cell(it) = value;
     break;
@@ -97,37 +86,40 @@ void Geometry::UpdateCellDirichlet_V(Grid *v, const real_t &value,
         v->Cell(it.Down()) = value;
         v->Cell(it) = value;
         break;
-    case cellSW:
-        v->Cell(it.Down()) = value;
-        v->Cell(it) = - v->Cell(it.Left());
-        break;
-    case cellW:
-        v->Cell(it.Down()) = value;
-        v->Cell(it) = - v->Cell(it.Left());
-        break;
     case cellSE:
         v->Cell(it.Down()) = value;
-        v->Cell(it) = - v->Cell(it.Right());
-        break;
     case cellE:
-        v->Cell(it.Down()) = value;
-        v->Cell(it) = - v->Cell(it.Right());
+        v->Cell(it) = 2.0 * value - v->Cell(it.Right());
         break;
-    /////////////////
-    // case cellN:
-    //     v->Cell(it.Top()) = value;
-    //     v->Cell(it) = value;
-    // case cellNW:
-    //     v->Cell(it.Top()) = value;
-    // case cellNE:
-    //     v->Cell(it.Top()) = value;
-    /////////////////
+    case cellSW:
+        v->Cell(it.Down()) = value;
+    case cellW:
+        v->Cell(it) = 2.0 * value - v->Cell(it.Left());
+        break;
     default:
-      v->Cell(it) = value;
-      break;
+    	v->Cell(it) = value;
+    	break;
     };
 }
 //------------------------------------------------------------------------------
+void Geometry::UpdateCellDirichlet_T(Grid *grid, const real_t &value, const Iterator &it) const {
+    switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].fluid) {
+    case cellW:
+        grid->Cell(it) = 2.0 * value - grid->Cell(it.Left());
+        break;
+    case cellN:
+        grid->Cell(it) = 2.0 * value - grid->Cell(it.Top());
+        break;
+    case cellE:
+        grid->Cell(it) = 2.0 * value - grid->Cell(it.Right());
+        break;
+    case cellS:
+        grid->Cell(it) = 2.0 * value - grid->Cell(it.Down());
+        break;
+    default:
+        break;
+  };
+}//------------------------------------------------------------------------------
 void Geometry::UpdateCellNeumann(Grid *grid, const Iterator &it) const {
     switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].fluid) {
     case cellW:
@@ -459,7 +451,10 @@ void Geometry::Update_U(Grid *u) const {
     Iterator it(this);
     for (it.First(); it.Valid(); it.Next()) {
       switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
-      case typeSlipH:
+      case typeHot:
+      case typeCold:
+      case typeInsul:
+      case typeSlipV:
       case typeSolid:
         UpdateCellDirichlet_U(u, 0.0, it);
         break;
@@ -467,13 +462,7 @@ void Geometry::Update_U(Grid *u) const {
       case typeInH:
         UpdateCellDirichlet_U(u, _velocity[0], it);
         break;
-      case typeSlipV:
-      case typeHot:
-        //UpdateCellDirichlet_T()
-      case typeCold:
-        //UpdateCellDirichlet_T()
-      case typeInsul:
-        //UpdateCellNeumann_P()
+      case typeSlipH:
       case typeOut:
         // std::cout << _size[0] << std::endl;
         UpdateCellNeumann(u, it);
@@ -522,7 +511,10 @@ void Geometry::Update_V(Grid *v) const {
     Iterator it(this);
     for (it.First(); it.Valid(); it.Next()) {
       switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
-      case typeSlipV:
+      case typeHot:
+      case typeCold:
+      case typeInsul:
+      case typeSlipH:
       case typeSolid:
         UpdateCellDirichlet_V(v, 0, it);
         break;
@@ -530,7 +522,7 @@ void Geometry::Update_V(Grid *v) const {
       case typeInV:
         UpdateCellDirichlet_V(v, _velocity[1], it);
         break;
-      case typeSlipH:
+      case typeSlipV:
       case typeOut:
         UpdateCellNeumann(v, it);
         break;
@@ -577,6 +569,9 @@ void Geometry::Update_P(Grid *p) const {
     Iterator it(this);
     for (it.First(); it.Valid(); it.Next()) {
       switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+      case typeHot:
+      case typeCold:
+      case typeInsul:
       case typeIn:
       case typeInH:
       case typeInV:
@@ -588,13 +583,14 @@ void Geometry::Update_P(Grid *p) const {
         p->Cell(it) = _pressure;
         break;
       case typeOut:
-        p->Cell(it) = 0;
+        p->Cell(it) = 0.0;
         break;
       default:
         break;
       };
     }
   } else {
+	  printf("Hi \n");
     BoundaryIterator it(this);
     if (_comm && _comm->isBottom()) {
       it.SetBoundary(0);
@@ -615,6 +611,98 @@ void Geometry::Update_P(Grid *p) const {
       it.SetBoundary(3);
       for (it.First(); it.Valid(); it.Next())
         p->Cell(it) = p->Cell(it.Left());
+    }
+  }
+}
+
+//------------------------------------------------------------------------------
+
+void Geometry::Update_T(Grid *t, real_t hot, real_t cold) const {
+  if (_cell) {
+/*    Iterator it(this);
+    for (it.First(); it.Valid(); it.Next()) {
+      switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+      case typeInsul:
+      case typeIn:
+      case typeInH:
+      case typeInV:
+      case typeSolid:
+      case typeSlipH:
+      case typeSlipV:
+      case typeOut:
+    	  UpdateCellNeumann_P(t, it);
+        break;
+      case typeHot:
+    	  UpdateCellDirichlet_T(t, hot, it);
+    	break;
+      case typeCold:
+    	  UpdateCellDirichlet_T(t, cold, it);
+      default:
+        break;
+      };
+    }
+
+  } else {*/
+    BoundaryIterator it(this);
+    if (_comm && _comm->isBottom()) {
+      it.SetBoundary(0);
+      for (it.First(); it.Valid(); it.Next())
+          switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+          case typeHot:
+          t->Cell(it) = 2.0 * hot - t->Cell(it.Top());
+          break;
+          case typeCold:
+          t->Cell(it) = 2.0 * cold - t->Cell(it.Top());
+          break;
+          default:
+          t->Cell(it) = t->Cell(it.Top());
+          break;
+          }
+    }
+    if (_comm && _comm->isTop()) {
+      it.SetBoundary(2);
+      for (it.First(); it.Valid(); it.Next())
+          switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+          case typeHot:
+          t->Cell(it) = 2.0 * hot - t->Cell(it.Down());
+          break;
+          case typeCold:
+          t->Cell(it) = 2.0 * cold - t->Cell(it.Down());
+          break;
+          default:
+          t->Cell(it) = t->Cell(it.Down());
+          break;
+          }
+    }
+    if (_comm && _comm->isLeft()) {
+      it.SetBoundary(1);
+      for (it.First(); it.Valid(); it.Next())
+          switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+          case typeHot:
+          t->Cell(it) = 2.0 * hot - t->Cell(it.Right());
+          break;
+          case typeCold:
+          t->Cell(it) = 2.0 * cold - t->Cell(it.Right());
+          break;
+          default:
+          t->Cell(it) = t->Cell(it.Right());
+          break;
+          }
+    }
+    if (_comm && _comm->isRight()) {
+      it.SetBoundary(3);
+      for (it.First(); it.Valid(); it.Next())
+          switch (_cell[_boffset + it.Pos()[0] + it.Pos()[1] * _size[0]].type) {
+          case typeHot:
+          t->Cell(it) = 2.0 * hot - t->Cell(it.Left());
+          break;
+          case typeCold:
+          t->Cell(it) = 2.0 * cold - t->Cell(it.Left());
+          break;
+          default:
+          t->Cell(it) = t->Cell(it.Left());
+          break;
+          }
     }
   }
 }
